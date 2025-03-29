@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Chatbot Psicológico</title>
+</head>
+<body>
+    <h1>Chatbot de Entrenamiento Psicológico</h1>
+    <div>
+        <input type="text" id="userInput" placeholder="Escribe un mensaje...">
+        <button onclick="sendMessage()">Enviar</button>
+    </div>
+    <div id="chat"></div>
+
+    <script>
+        function sendMessage() {
+            let input = document.getElementById("userInput").value;
+            fetch("/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: input })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("chat").innerHTML += "<p><strong>Tú:</strong> " + input + "</p>";
+                document.getElementById("chat").innerHTML += "<p><strong>Bot:</strong> " + data.response + "</p>";
+                document.getElementById("userInput").value = "";
+            });
+        }
+    </script>
+</body>
+</html>
