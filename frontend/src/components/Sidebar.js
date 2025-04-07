@@ -1,5 +1,5 @@
-import React from 'react';
-import { Menu, Button } from 'antd';
+import React from "react";
+import { Menu, Button } from "antd";
 import {
   UserOutlined,
   TeamOutlined,
@@ -7,47 +7,125 @@ import {
   SolutionOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-} from '@ant-design/icons';
+  SettingOutlined,
+  LogoutOutlined,
+} from "@ant-design/icons";
 
 const { SubMenu } = Menu;
 
 function Sidebar({ collapsed, toggleSidebar }) {
+  const menuItems = [
+    {
+      key: "director",
+      icon: <UserOutlined />,
+      title: "Director",
+      children: [{ key: "director-1", label: "Perfil 1" }],
+    },
+    {
+      key: "estudiante",
+      icon: <BookOutlined />,
+      title: "Estudiante",
+      children: [
+        { key: "estudiante-1", label: "Perfil 1" },
+        { key: "estudiante-2", label: "Perfil 2" },
+      ],
+    },
+    {
+      key: "padres",
+      icon: <TeamOutlined />,
+      title: "Padres",
+      children: [
+        { key: "padres-1", label: "Perfil 1" },
+        { key: "padres-2", label: "Perfil 2" },
+      ],
+    },
+    {
+      key: "docente",
+      icon: <SolutionOutlined />,
+      title: "Docente",
+      children: [
+        { key: "docente-1", label: "Perfil 1" },
+        { key: "docente-2", label: "Perfil 2" },
+      ],
+    },
+  ];
+
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Botón para alternar el sidebar */}
-      <div style={{ padding: '10px', textAlign: 'center', background: '#001529' }}>
+    <div
+      style={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        background: "#001529",
+      }}
+    >
+      {/* Logo Section */}
+      <div
+        style={{
+          padding: "20px",
+          textAlign: "center",
+          background: "#002140",
+          color: "#fff",
+        }}
+      >
+        <h2 style={{ margin: 0, fontSize: "18px" }}>AI Chat bot</h2>
+      </div>
+
+      {/* Toggle Button */}
+      <div
+        style={{ padding: "10px", textAlign: "center", background: "#001529" }}
+      >
         <Button
           type="primary"
           onClick={toggleSidebar}
           icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+          style={{ width: "100%", borderRadius: "3px" }}
         >
-          {collapsed ? '' : 'Cerrar'}
+          {collapsed ? "" : "Cerrar"}
         </Button>
       </div>
 
-      {/* Opciones del sidebar */}
+      {/* Sidebar Menu */}
       <Menu
         mode="inline"
         theme="dark"
         style={{ flex: 1, borderRight: 0 }}
+        defaultOpenKeys={menuItems.map((item) => item.key)}
       >
-        <SubMenu key="director" icon={<UserOutlined />} title="Director">
-          <Menu.Item key="director-1">Perfil 1</Menu.Item>
-          <Menu.Item key="director-2">Perfil 2</Menu.Item>
-        </SubMenu>
-        <SubMenu key="estudiante" icon={<BookOutlined />} title="Estudiante">
-          <Menu.Item key="estudiante-1">Perfil 1</Menu.Item>
-          <Menu.Item key="estudiante-2">Perfil 2</Menu.Item>
-        </SubMenu>
-        <SubMenu key="padres" icon={<TeamOutlined />} title="Padres">
-          <Menu.Item key="padres-1">Perfil 1</Menu.Item>
-          <Menu.Item key="padres-2">Perfil 2</Menu.Item>
-        </SubMenu>
-        <SubMenu key="docente" icon={<SolutionOutlined />} title="Docente">
-          <Menu.Item key="docente-1">Perfil 1</Menu.Item>
-          <Menu.Item key="docente-2">Perfil 2</Menu.Item>
-        </SubMenu>
+        {menuItems.map((menu) => (
+          <SubMenu key={menu.key} icon={menu.icon} title={menu.title}>
+            {menu.children.map((child) => (
+              <Menu.Item key={child.key}>{child.label}</Menu.Item>
+            ))}
+          </SubMenu>
+        ))}
       </Menu>
+
+      {/* Footer Section */}
+      <div
+        style={{
+          padding: "10px",
+          textAlign: "center",
+          background: "#001529",
+          borderTop: "1px solid #002140",
+        }}
+      >
+        <Button
+          type="link"
+          icon={<SettingOutlined />}
+          style={{ color: "#fff" }}
+        >
+          {collapsed ? "" : "Configuración"}
+        </Button>
+        <div
+          style={{
+            marginRight: "10px",
+          }}
+        ></div>
+        <Button type="link" icon={<LogoutOutlined />} style={{ color: "#fff" }}>
+          {collapsed ? "" : "Salir"}
+        </Button>
+      </div>
     </div>
   );
 }
