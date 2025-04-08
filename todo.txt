@@ -1,13 +1,10 @@
 todo:
 perfil profesional, perfiles personales
 make the prompt better PLEASE
-save messages *somewhere* when they're sent
- -ability to download messages as PDF files or smn
- -send this psudo-backlog chat to the prompt everytime, acting as memory
 
 redesign the UI to take everything into account
  -select role before conversation
- -sidebar doesn't make a lot a sense
+ -sidebar doesn't make a lot a sense... maybe change it for chats for that user (chatgpt style)
 
 create settings and related
 create users, add logging in and out
