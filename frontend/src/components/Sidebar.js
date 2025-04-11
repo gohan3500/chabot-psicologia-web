@@ -10,10 +10,19 @@ import {
   SettingOutlined,
   LogoutOutlined,
 } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom"; // 👈 Importa esto
 
 const { SubMenu } = Menu;
 
 function Sidebar({ collapsed, toggleSidebar }) {
+  const navigate = useNavigate(); // 👈 Instancia de navegación
+
+  const handleLogout = () => {
+    // Aquí puedes limpiar localStorage o estados de autenticación
+    localStorage.clear(); // Si guardas algo del usuario aquí
+    navigate("/"); // 👈 Redirige al login
+  };
+
   const menuItems = [
     {
       key: "director",
@@ -117,12 +126,13 @@ function Sidebar({ collapsed, toggleSidebar }) {
         >
           {collapsed ? "" : "Configuración"}
         </Button>
-        <div
-          style={{
-            marginRight: "10px",
-          }}
-        ></div>
-        <Button type="link" icon={<LogoutOutlined />} style={{ color: "#fff" }}>
+        <div style={{ marginRight: "10px" }}></div>
+        <Button
+          type="link"
+          icon={<LogoutOutlined />}
+          style={{ color: "#fff" }}
+          onClick={handleLogout} // 👈 Aquí se activa el logout
+        >
           {collapsed ? "" : "Salir"}
         </Button>
       </div>
