@@ -5,13 +5,18 @@ from werkzeug.security import check_password_hash  # type: ignore
 from chatbot.db import mysql
 import traceback
 
-auth_bp = Blueprint('auth', __name__)
+auth_bp = Blueprint("auth", __name__)
 
-@auth_bp.route('/register', methods=['POST', 'OPTIONS'])
-@cross_origin(origin='http://localhost:3000', methods=['POST', 'OPTIONS'], allow_headers=['Content-Type'])
+
+@auth_bp.route("/register", methods=["POST", "OPTIONS"])
+@cross_origin(
+    origin="http://localhost:3000",
+    methods=["POST", "OPTIONS"],
+    allow_headers=["Content-Type"],
+)
 def register():
-    if request.method == 'OPTIONS':
-        return jsonify({'ok': True}), 200
+    if request.method == "OPTIONS":
+        return jsonify({"ok": True}), 200
 
     data = request.get_json()
     nombre = data.get("nombre")
@@ -32,7 +37,7 @@ def register():
         hash_contrasena = generate_password_hash(contrasena)
         cursor.execute(
             "INSERT INTO usuarios (nombre, correo, contrasena_hash) VALUES (%s, %s, %s)",
-            (nombre, correo, hash_contrasena)
+            (nombre, correo, hash_contrasena),
         )
         mysql.connection.commit()
         cursor.close()
@@ -40,10 +45,11 @@ def register():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@auth_bp.route('/login', methods=['POST', 'OPTIONS'])
-@cross_origin(origin='http://localhost:3000', headers=['Content-Type'])
+
+@auth_bp.route("/login", methods=["POST", "OPTIONS"])
+@cross_origin(origin="http://localhost:3000", headers=["Content-Type"])
 def login():
-    if request.method == 'OPTIONS':
+    if request.method == "OPTIONS":
         return jsonify({"ok": True}), 200
 
     data = request.get_json()
@@ -55,7 +61,10 @@ def login():
 
     try:
         cursor = mysql.connection.cursor()
-        cursor.execute("SELECT id, nombre, contrasena_hash FROM usuarios WHERE correo = %s", (correo,))
+        cursor.execute(
+            "SELECT id, nombre, contrasena_hash FROM usuarios WHERE correo = %s",
+            (correo,),
+        )
         row = cursor.fetchone()
         cursor.close()
 
@@ -63,20 +72,22 @@ def login():
             usuario = {
                 "id": row["id"],
                 "nombre": row["nombre"],
-                "contrasena_hash": row["contrasena_hash"]
-                }
+                "contrasena_hash": row["contrasena_hash"],
+            }
             print("Usuario encontrado:", usuario)
 
             if check_password_hash(usuario["contrasena_hash"], contrasena):
-                return jsonify({
-                    "mensaje": f"Bienvenido {usuario['nombre']}",
-                    "usuario_id": usuario["id"],
-                    "nombre": usuario["nombre"]
-                })
+                return jsonify(
+                    {
+                        "mensaje": f"Bienvenido {usuario['nombre']}",
+                        "usuario_id": usuario["id"],
+                        "nombre": usuario["nombre"],
+                    }
+                )
             else:
                 return jsonify({"mensaje": "Contraseña incorrecta"}), 401
         else:
-            return jsonify({"mensaje": "Usuario no encontrado"}), 404
+            return jsonify({"mensaje": "Correo no encontrado"}), 404
 
     except Exception as e:
         print("Error en login:", e)

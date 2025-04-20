@@ -1,3 +1,4 @@
 flask
-flask-cors
+flask-Cors
+flask-MySQLdb
 google-generativeai

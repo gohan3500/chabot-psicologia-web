@@ -1,14 +1,21 @@
 todo:
 perfil profesional, perfiles personales
-make the prompt better PLEASE
+make the prompt better and implement langchain
+ -implement gemini system instruccions and read the docs
 
 redesign the UI to take everything into account
- -select role before conversation
+ -improve the login page
  -sidebar doesn't make a lot a sense... maybe change it for chats for that user (chatgpt style)
 
 create settings and related
 create users, add logging in and out
  -retain chat from user to user
+
+bugs:
+-can chat without being logged in under certain conditions
+-allows access to login page when logged in
+-no error message for attempting to create a user with an already existing email
+-
 
 notes:
 roles based on the "Big Five" personality traits
@@ -17,3 +24,4 @@ future:
 Preguntas ejemplos
 Randomness in personality
  -Cambiar temperatura respuesta a respuesta
+
