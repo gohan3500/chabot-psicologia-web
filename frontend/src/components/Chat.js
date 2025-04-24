@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Input, Button, List, Typography, Layout, Card, Modal } from "antd";
+import { Input, Button, List, Typography, Layout, Card } from "antd";
 import axios from "axios";
 import jsPDF from "jspdf";
 
@@ -9,7 +9,7 @@ function Chat() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [role, setRole] = useState("");
-  const [isModalVisible, setIsModalVisible] = useState(true);
+  const [isRoleSubmitted, setIsRoleSubmitted] = useState(false);
   const [log, setLog] = useState("");
   const chatEndRef = useRef(null);
 
@@ -44,18 +44,29 @@ function Chat() {
     }
   };
 
+  const handleRoleSubmit = () => {
+    if (role.trim() && input.trim()) {
+      const firstMessage = { text: input, sender: "user" };
+      setMessages([firstMessage]);
+      setLog(`User: ${input}\n`);
+      setIsRoleSubmitted(true);
+      setInput("");
+    } else {
+      alert("Por favor, ingresa un rol y un mensaje inicial.");
+    }
+  };
+
+  const handleConfig = () => {
+    handleRoleSubmit();
+    handleSend();
+  };
+
+  // Scroll to the bottom of the chat whenever a new message is added
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleRoleSubmit = () => {
-    if (role.trim()) {
-      setIsModalVisible(false);
-    } else {
-      alert("Por favor, selecciona un rol para el bot.");
-    }
-  };
-
+  // PDF creation
   const handleDownloadLog = () => {
     const pdf = new jsPDF();
     const margin = 10;
@@ -119,27 +130,6 @@ function Chat() {
 
   return (
     <Layout style={{ height: "100%" }}>
-      <Modal
-        title="Selecciona un rol para el entrevistado"
-        open={isModalVisible}
-        footer={null}
-        closable={false}
-      >
-        <Input
-          placeholder="Ejemplo: maestra de primaria"
-          onPressEnter={handleRoleSubmit}
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-        />
-        <Button
-          type="primary"
-          onClick={handleRoleSubmit}
-          style={{ marginTop: "10px" }}
-        >
-          Confirmar
-        </Button>
-      </Modal>
-
       <Content
         style={{
           padding: "5px",
@@ -148,50 +138,89 @@ function Chat() {
           gap: "10px",
         }}
       >
-        <Card style={{ flex: 1, overflowY: "auto", padding: "15px" }}>
-          <List
-            dataSource={messages}
-            renderItem={(item) => (
-              <List.Item
-                style={{
-                  justifyContent:
-                    item.sender === "user" ? "flex-end" : "flex-start",
-                }}
-              >
-                <div
+        {!isRoleSubmitted && (
+          <Card
+            style={{
+              margin: "100px 370px",
+              padding: "15px",
+              display: "flex",
+              alignContent: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Typography.Title
+              level={3}
+              style={{
+                marginBottom: "15px",
+                marginTop: "-5px",
+                textAlign: "center",
+              }}
+            >
+              Configuración Inicial
+            </Typography.Title>
+            <Input
+              placeholder="Rol del entrevistado"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              onPressEnter={handleConfig}
+              style={{ marginBottom: "10px" }}
+            />
+            <Input
+              placeholder="Escribe tu primer mensaje..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onPressEnter={handleConfig}
+              style={{ marginBottom: "10px" }}
+            />
+            <Button type="primary" onClick={handleConfig} block>
+              Iniciar Chat
+            </Button>
+          </Card>
+        )}
+        {isRoleSubmitted && (
+          <Card style={{ flex: 1, overflowY: "auto", padding: "15px" }}>
+            <List
+              dataSource={messages}
+              renderItem={(item) => (
+                <List.Item
                   style={{
-                    maxWidth: "70%",
-                    padding: "10px",
-                    borderRadius: "10px",
-                    backgroundColor:
-                      item.sender === "user" ? "#1890ff" : "#f0f0f0",
-                    color: item.sender === "user" ? "#fff" : "#000",
+                    justifyContent:
+                      item.sender === "user" ? "flex-end" : "flex-start",
                   }}
                 >
-                  <Typography.Text
-                    strong
-                    style={{ color: item.sender === "user" ? "#fff" : "#000" }}
-                  ></Typography.Text>
-                  {item.text}
-                </div>
-              </List.Item>
-            )}
-          />
-          <div ref={chatEndRef} />
-        </Card>
-        <div style={{ display: "flex", gap: "10px" }}>
-          <Input
-            placeholder="Escribe tu mensaje..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onPressEnter={handleSend}
-            style={{ flex: 1 }}
-          />
-          <Button type="primary" onClick={handleSend}>
-            Enviar
-          </Button>
-          <Button onClick={handleDownloadLog}>Descargar Chat</Button>
-        </div>
+                  <div
+                    style={{
+                      maxWidth: "70%",
+                      padding: "10px",
+                      borderRadius: "10px",
+                      backgroundColor:
+                        item.sender === "user" ? "#1890ff" : "#f0f0f0",
+                      color: item.sender === "user" ? "#fff" : "#000",
+                    }}
+                  >
+                    {item.text}
+                  </div>
+                </List.Item>
+              )}
+            />
+            <div ref={chatEndRef} />
+          </Card>
+        )}
+        {isRoleSubmitted && (
+          <div style={{ display: "flex", gap: "10px" }}>
+            <Input
+              placeholder="Escribe tu mensaje..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onPressEnter={handleSend}
+              style={{ flex: 1 }}
+            />
+            <Button type="primary" onClick={handleSend}>
+              Enviar
+            </Button>
+            <Button onClick={handleDownloadLog}>Descargar Chat</Button>
+          </div>
+        )}
       </Content>
       <Footer
         style={{ fontSize: "12px", textAlign: "center", margin: "-15px" }}

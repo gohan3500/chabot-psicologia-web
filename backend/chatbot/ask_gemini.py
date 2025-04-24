@@ -21,13 +21,3 @@ def ask_gemini(message, role, log):
         """
     )
     return response.text
-
-
-# Prueba simple
-if __name__ == "__main__":
-    while True:
-        user_input = input("Tú: ")
-        if user_input.lower() in ["salir", "exit"]:
-            break
-        response = ask_gemini(user_input)
-        print("Chatbot:", response)

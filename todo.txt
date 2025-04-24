@@ -1,21 +1,20 @@
 todo:
-perfil profesional, perfiles personales
 make the prompt better and implement langchain
  -implement gemini system instruccions and read the docs
 
 redesign the UI to take everything into account
- -improve the login page
- -sidebar doesn't make a lot a sense... maybe change it for chats for that user (chatgpt style)
+ -change sidebar (chatgpt style)
+ -integrate modal into chat card
 
-create settings and related
 create users, add logging in and out
  -retain chat from user to user
+create settings and related
 
 bugs:
 -can chat without being logged in under certain conditions
 -allows access to login page when logged in
 -no error message for attempting to create a user with an already existing email
--
+-si prendes el servidor estado iniciado sesion, no te deja cerrarla?
 
 notes:
 roles based on the "Big Five" personality traits
