@@ -1,28 +1,34 @@
 import React from "react";
-
 import { Form, Input, Button, message, Typography } from "antd";
-import axios from "../api";
+import axiosInstance from "../context/axiosInstance"; // Asegúrate de usar la instancia correcta de Axios
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const { Title, Text } = Typography;
 
 const LoginForm = () => {
-  const { login } = useAuth();
+  const { login } = useAuth(); // Obtén el método login del contexto
   const navigate = useNavigate();
   const [form] = Form.useForm();
 
-  const onFinish = async (values) => {
+  const handleLogin = async (values) => {
     try {
-      const res = await axios.post("/auth/login", values);
+      const res = await axiosInstance.post("/auth/login", values);
+      console.log("Respuesta del backend al iniciar sesión:", res.data); // Depuración
+      login({
+        id: res.data.usuario_id,
+        nombre: res.data.nombre,
+        rol: res.data.rol,
+      }); // Guarda los datos en el contexto
       message.success(res.data.mensaje);
-      login();
-      navigate("/chat");
+      navigate("/chat"); // Redirige al chat después de iniciar sesión
     } catch (err) {
+      console.error("Error al iniciar sesión:", err);
       const errorMessage =
         err.response?.data?.mensaje || "Error al iniciar sesión";
       message.error(errorMessage);
 
+      // Manejo de errores específicos en los campos del formulario
       if (errorMessage === "Correo no encontrado") {
         form.setFields([
           {
@@ -42,8 +48,8 @@ const LoginForm = () => {
   };
 
   const onFinishFailed = (errorInfo) => {
-    // Client-side validation errors are handled by AntD itself
-    console.log("Failed:", errorInfo);
+    // Manejo de errores de validación del lado del cliente
+    console.log("Errores de validación:", errorInfo);
   };
 
   return (
@@ -76,7 +82,7 @@ const LoginForm = () => {
           form={form}
           name="login"
           layout="vertical"
-          onFinish={onFinish}
+          onFinish={handleLogin} // Conecta el método handleLogin al formulario
           onFinishFailed={onFinishFailed}
           autoComplete="off"
           requiredMark={false}
@@ -116,6 +122,9 @@ const LoginForm = () => {
             </Button>
             <Button type="link" onClick={() => navigate("/register")} block>
               ¿No tienes cuenta? Regístrate
+            </Button>
+            <Button type="link" onClick={() => navigate("/forgot-password")} block>
+              ¿Olvidaste tu contraseña?
             </Button>
           </Form.Item>
         </Form>

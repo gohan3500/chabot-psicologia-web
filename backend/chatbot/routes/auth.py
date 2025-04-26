@@ -62,24 +62,30 @@ def login():
     try:
         cursor = mysql.connection.cursor()
         cursor.execute(
-            "SELECT id, nombre, contrasena_hash FROM usuarios WHERE correo = %s",
+            "SELECT id, nombre, contrasena_hash, rol FROM usuarios WHERE correo = %s",
             (correo,),
         )
         row = cursor.fetchone()
         cursor.close()
 
         if row:
-            usuario = {
-                "id": row["id"],
-                "nombre": row["nombre"],
-            }
-            return jsonify(
-                {
-                    "mensaje": f"Bienvenido {usuario['nombre']}",
-                    "usuario_id": usuario["id"],  # Incluye el usuario_id
-                    "nombre": usuario["nombre"],
+            if check_password_hash(row["contrasena_hash"], contrasena):
+                usuario = {
+                    "id": row["id"],
+                    "nombre": row["nombre"],
+                    "rol": row["rol"],
                 }
-            )
+                print("Datos del usuario obtenidos de la base de datos:", usuario)  # Depuración
+                return jsonify(
+                    {
+                        "mensaje": f"Bienvenido {usuario['nombre']}",
+                        "usuario_id": usuario["id"],
+                        "nombre": usuario["nombre"],
+                        "rol": usuario["rol"],
+                    }
+                )
+            else:
+                return jsonify({"mensaje": "Contraseña incorrecta"}), 401
         else:
             return jsonify({"mensaje": "Correo no encontrado"}), 404
 
@@ -87,3 +93,38 @@ def login():
         print("Error en login:", e)
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
+
+@auth_bp.route("/reset-password", methods=["POST", "OPTIONS"])
+@cross_origin(origin="http://localhost:3000", headers=["Content-Type"])
+def reset_password():
+    data = request.get_json()
+    correo = data.get("correo")
+    nueva_contrasena = data.get("nueva_contrasena")
+
+    if not correo or not nueva_contrasena:
+        return jsonify({"mensaje": "Faltan datos"}), 400
+
+    try:
+        cursor = mysql.connection.cursor()
+        cursor.execute(
+            "SELECT id FROM usuarios WHERE correo = %s",
+            (correo,),
+        )
+        row = cursor.fetchone()
+
+        if not row:
+            return jsonify({"mensaje": "Correo no encontrado"}), 404
+
+        nueva_contrasena_hash = generate_password_hash(nueva_contrasena)
+        cursor.execute(
+            "UPDATE usuarios SET contrasena_hash = %s WHERE correo = %s",
+            (nueva_contrasena_hash, correo),
+        )
+        mysql.connection.commit()
+        cursor.close()
+
+        return jsonify({"mensaje": "Contraseña actualizada exitosamente"}), 200
+    except Exception as e:
+        print("Error al actualizar la contraseña:", e)
+        return jsonify({"mensaje": "Error al actualizar la contraseña"}), 500

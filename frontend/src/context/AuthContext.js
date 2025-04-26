@@ -24,8 +24,9 @@ export const AuthProvider = ({ children }) => {
   }, [userData]);
 
   const login = (user) => {
+    console.log("Datos del usuario al iniciar sesión:", user); // Depuración
     setIsAuthenticated(true);
-    setUserData(user);
+    setUserData(user); // Guarda los datos del usuario, incluyendo el rol
   };
 
   const logout = () => {

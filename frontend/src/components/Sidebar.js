@@ -9,9 +9,12 @@ import {
   SettingOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 function Sidebar({ collapsed, toggleSidebar, chats, onNewChat, customButtonText, onCustomAction }) {
   const navigate = useNavigate();
+  const { userData } = useAuth();// Obtener los datos del usuario desde el contexto
+  console.log("Datos del usuario en Sidebar:", userData);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -96,24 +99,26 @@ function Sidebar({ collapsed, toggleSidebar, chats, onNewChat, customButtonText,
         />
       </div>
 
-      {/* Configuración */}
-      <div
-        style={{
-          padding: "10px",
-          textAlign: "center",
-          background: "#001529",
-          borderTop: "1px solid #002140",
-        }}
-      >
-        <Button
-          type="link"
-          icon={<SettingOutlined />}
-          style={{ color: "#fff" }}
-          onClick={() => navigate("/configuracion")}
+      {/* Configuración (solo para Directores) */}
+      {userData?.rol === "Director" && (
+        <div
+          style={{
+            padding: "10px",
+            textAlign: "center",
+            background: "#001529",
+            borderTop: "1px solid #002140",
+          }}
         >
-          {collapsed ? "" : "Configuración"}
-        </Button>
-      </div>
+          <Button
+            type="link"
+            icon={<SettingOutlined />}
+            style={{ color: "#fff" }}
+            onClick={() => navigate("/configuracion")}
+          >
+            {collapsed ? "" : "Configuración"}
+          </Button>
+        </div>
+      )}
 
       {/* Salir */}
       <div
