@@ -4,6 +4,7 @@ from config import Config
 from chatbot.extensions import mysql
 from chatbot.routes.auth import auth_bp
 from chatbot.routes.chat import chat_bp
+from chatbot.routes.roles import roles_bp
 
 def create_app():
     app = Flask(__name__)
@@ -20,6 +21,7 @@ def create_app():
     # Registrar Blueprints
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(chat_bp, url_prefix="/api")
+    app.register_blueprint(roles_bp, url_prefix="/roles")
 
     return app
 

@@ -4,6 +4,7 @@ import { useAuth } from "./context/AuthContext";
 import LoginForm from "./components/LoginForm";
 import RegisterForm from "./components/RegisterForm";
 import ChatLayout from "./pages/ChatLayout";
+import Configuracion from "./pages/Configuracion";
 
 function App() {
   const { isAuthenticated } = useAuth();
@@ -25,6 +26,10 @@ function App() {
       <Route
         path="/chat"
         element={isAuthenticated ? <ChatLayout /> : <Navigate to="/login" />}
+      />
+      <Route
+        path="/configuracion"
+        element={isAuthenticated ? <Configuracion /> : <Navigate to="/login" />}
       />
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>

@@ -6,10 +6,11 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   LogoutOutlined,
+  SettingOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 
-function Sidebar({ collapsed, toggleSidebar, chats, onNewChat }) {
+function Sidebar({ collapsed, toggleSidebar, chats, onNewChat, customButtonText, onCustomAction }) {
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -54,7 +55,7 @@ function Sidebar({ collapsed, toggleSidebar, chats, onNewChat }) {
         </Button>
       </div>
 
-      {/* New Chat Button */}
+      {/* Custom Button */}
       <div
         style={{
           padding: "10px",
@@ -67,9 +68,9 @@ function Sidebar({ collapsed, toggleSidebar, chats, onNewChat }) {
           type="primary"
           icon={<PlusOutlined />}
           style={{ width: "100%", borderRadius: "3px" }}
-          onClick={onNewChat}
+          onClick={onCustomAction || onNewChat}
         >
-          {collapsed ? "" : "Nuevo Chat"}
+          {collapsed ? "" : customButtonText || "Nuevo Chat"}
         </Button>
       </div>
 
@@ -95,7 +96,26 @@ function Sidebar({ collapsed, toggleSidebar, chats, onNewChat }) {
         />
       </div>
 
-      {/* Footer Section */}
+      {/* Configuración */}
+      <div
+        style={{
+          padding: "10px",
+          textAlign: "center",
+          background: "#001529",
+          borderTop: "1px solid #002140",
+        }}
+      >
+        <Button
+          type="link"
+          icon={<SettingOutlined />}
+          style={{ color: "#fff" }}
+          onClick={() => navigate("/configuracion")}
+        >
+          {collapsed ? "" : "Configuración"}
+        </Button>
+      </div>
+
+      {/* Salir */}
       <div
         style={{
           padding: "10px",

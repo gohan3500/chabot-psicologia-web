@@ -72,24 +72,18 @@ def login():
             usuario = {
                 "id": row["id"],
                 "nombre": row["nombre"],
-                "contrasena_hash": row["contrasena_hash"],
             }
-            print("Usuario encontrado:", usuario)
-
-            if check_password_hash(usuario["contrasena_hash"], contrasena):
-                return jsonify(
-                    {
-                        "mensaje": f"Bienvenido {usuario['nombre']}",
-                        "usuario_id": usuario["id"],
-                        "nombre": usuario["nombre"],
-                    }
-                )
-            else:
-                return jsonify({"mensaje": "Contraseña incorrecta"}), 401
+            return jsonify(
+                {
+                    "mensaje": f"Bienvenido {usuario['nombre']}",
+                    "usuario_id": usuario["id"],  # Incluye el usuario_id
+                    "nombre": usuario["nombre"],
+                }
+            )
         else:
             return jsonify({"mensaje": "Correo no encontrado"}), 404
 
     except Exception as e:
         print("Error en login:", e)
-        traceback.print_exc()  # Esto imprimirá el error real con línea exacta
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500

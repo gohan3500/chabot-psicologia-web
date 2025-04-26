@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Input, Button, List, Typography, Layout, Card } from "antd";
+import { Input, Button, List, Typography, Layout, Card, Select } from "antd";
 import axios from "axios";
 import jsPDF from "jspdf";
 
@@ -9,9 +9,23 @@ function Chat() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [role, setRole] = useState("");
+  const [roles, setRoles] = useState([]);
   const [isRoleSubmitted, setIsRoleSubmitted] = useState(false);
   const [log, setLog] = useState("");
   const chatEndRef = useRef(null);
+
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const res = await axios.get("http://127.0.0.1:5000/roles/list-roles");
+        setRoles(res.data); // Actualiza el estado con los roles obtenidos
+      } catch (err) {
+        console.error("Error al cargar los roles:", err);
+      }
+    };
+
+    fetchRoles();
+  }, []);
 
   const handleSend = async () => {
     if (input.trim()) {
@@ -41,23 +55,6 @@ function Chat() {
         );
       }
     }
-  };
-
-  const handleRoleSubmit = () => {
-    if (role.trim() && input.trim()) {
-      const firstMessage = { text: input, sender: "user" };
-      setMessages([firstMessage]);
-      setLog(`User: ${input}\n`);
-      setIsRoleSubmitted(true);
-      setInput("");
-    } else {
-      alert("Por favor, ingresa un rol y un mensaje inicial.");
-    }
-  };
-
-  const handleConfig = () => {
-    handleRoleSubmit();
-    handleSend();
   };
 
   // Scroll to the bottom of the chat whenever a new message is added
@@ -157,21 +154,24 @@ function Chat() {
             >
               Configuración Inicial
             </Typography.Title>
-            <Input
-              placeholder="Rol del entrevistado"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              onPressEnter={handleConfig}
-              style={{ marginBottom: "10px" }}
-            />
+            <Select
+              placeholder="Selecciona un rol"
+              style={{ width: "100%", marginBottom: "10px" }}
+              onChange={(value) => setRole(value)}
+            >
+              {roles.map((rol) => (
+                <Select.Option key={rol.id} value={rol.nombre_rol}>
+                  {rol.nombre_rol}
+                </Select.Option>
+              ))}
+            </Select>
             <Input
               placeholder="Escribe tu primer mensaje..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onPressEnter={handleConfig}
               style={{ marginBottom: "10px" }}
             />
-            <Button type="primary" onClick={handleConfig} block>
+            <Button type="primary" onClick={() => setIsRoleSubmitted(true)} block>
               Iniciar Chat
             </Button>
           </Card>
