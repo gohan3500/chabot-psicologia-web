@@ -24,7 +24,6 @@ function Chat() {
         const response = await axios.post("http://127.0.0.1:5000/api/chat", {
           message: input,
           role: role,
-          log: log,
         });
 
         const botMessage = { text: response.data.response, sender: "bot" };

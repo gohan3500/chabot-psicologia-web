@@ -14,7 +14,7 @@ function Sidebar({ collapsed, toggleSidebar, chats, onNewChat }) {
 
   const handleLogout = () => {
     localStorage.clear();
-    navigate("/");
+    window.location.reload();
   };
 
   return (

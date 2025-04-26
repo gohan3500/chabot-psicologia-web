@@ -2,3 +2,7 @@ flask
 flask-Cors
 flask-MySQLdb
 google-generativeai
+langchain-core
+langgraph>0.2.27
+langchain[google-genai]
+langchain-community
