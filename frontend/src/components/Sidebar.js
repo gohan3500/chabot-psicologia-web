@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, List, Avatar } from "antd";
+import { Button, List, Avatar, Tooltip, Popconfirm } from "antd";
 import {
   MessageOutlined,
   PlusOutlined,
@@ -7,14 +7,39 @@ import {
   MenuUnfoldOutlined,
   LogoutOutlined,
   SettingOutlined,
+  DeleteOutlined,
 } from "@ant-design/icons";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import axios from "axios";
 
-function Sidebar({ collapsed, toggleSidebar, chats, onNewChat, customButtonText, onCustomAction }) {
+function Sidebar({
+  collapsed,
+  toggleSidebar,
+  chats = [],
+  onNewChat,
+  customButtonText,
+  onCustomAction,
+}) {
   const navigate = useNavigate();
-  const { userData } = useAuth();// Obtener los datos del usuario desde el contexto
-  console.log("Datos del usuario en Sidebar:", userData);
+  const location = useLocation();
+  const { userData } = useAuth();
+
+  const activeChatId = location.pathname.split("/chat/")[1];
+
+  const handleDeleteChat = async (chatId) => {
+    try {
+      await axios.delete(`/api/delete_chats/${chatId}`, {
+        params: { user_id: userData.id },
+      });
+      window.dispatchEvent(new Event("refreshChats"));
+      if (location.pathname === `/chat/${chatId}`) {
+        navigate("/chat"); // redirect if the deleted chat was open
+      }
+    } catch (err) {
+      console.error("Error deleting chat", err);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.clear();
@@ -30,47 +55,38 @@ function Sidebar({ collapsed, toggleSidebar, chats, onNewChat, customButtonText,
         background: "#001529",
       }}
     >
-      {/* Logo Section */}
+      {/* Header */}
       <div
         style={{
-          padding: "20px",
+          padding: 20,
           textAlign: "center",
           background: "#002140",
           color: "#fff",
         }}
       >
-        <h2 style={{ margin: 0, fontSize: "24px" }}>
+        <h2 style={{ margin: 0, fontSize: "20px", whiteSpace: "nowrap" }}>
           {collapsed ? "AI" : "Chatbot de Psicología"}
         </h2>
       </div>
 
-      {/* Toggle Button */}
-      <div
-        style={{ padding: "10px", textAlign: "center", background: "#001529" }}
-      >
+      {/* Toggle */}
+      <div style={{ padding: "10px", textAlign: "center" }}>
         <Button
           type="primary"
-          onClick={toggleSidebar}
           icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-          style={{ width: "100%", borderRadius: "3px" }}
+          onClick={toggleSidebar}
+          style={{ width: "100%" }}
         >
-          {collapsed ? "" : "Cerrar"}
+          {collapsed ? "" : "Ocultar"}
         </Button>
       </div>
 
-      {/* Custom Button */}
-      <div
-        style={{
-          padding: "10px",
-          textAlign: "center",
-          background: "#001529",
-          borderBottom: "1px solid #002140",
-        }}
-      >
+      {/* New Chat */}
+      <div style={{ padding: "10px", marginBottom: "5px" }}>
         <Button
           type="primary"
           icon={<PlusOutlined />}
-          style={{ width: "100%", borderRadius: "3px" }}
+          block
           onClick={onCustomAction || onNewChat}
         >
           {collapsed ? "" : customButtonText || "Nuevo Chat"}
@@ -78,65 +94,101 @@ function Sidebar({ collapsed, toggleSidebar, chats, onNewChat, customButtonText,
       </div>
 
       {/* Chat List */}
-      <div style={{ flex: 1, overflowY: "auto", background: "#001529" }}>
+      <div style={{ flex: 1, overflowY: "auto" }}>
         <List
-          itemLayout="horizontal"
           dataSource={chats}
-          renderItem={(chat) => (
-            <List.Item
-              style={{ padding: "10px 20px", cursor: "pointer" }}
-              onClick={() => navigate(`/chat/${chat.id}`)}
-            >
-              <List.Item.Meta
-                avatar={<Avatar icon={<MessageOutlined />} />}
-                title={<span style={{ color: "#fff" }}>{chat.name}</span>}
-                description={
-                  <span style={{ color: "#aaa" }}>{chat.lastMessage}</span>
-                }
-              />
-            </List.Item>
-          )}
+          renderItem={(chat) => {
+            const isActive = chat.id === activeChatId;
+            return (
+              <Tooltip
+                title={collapsed && (chat.title || "Entrevista sin título")}
+                placement="right"
+                disabled={!collapsed}
+              >
+                <List.Item
+                  style={{
+                    padding: "10px 20px",
+                    background: isActive ? "#1890ff33" : "inherit",
+                    cursor: "pointer",
+                    transition: "background 0.2s",
+                  }}
+                  onClick={() => navigate(`/chat/${chat.id}`)}
+                  actions={[
+                    <Popconfirm
+                      title="¿Eliminar este chat?"
+                      onConfirm={() => handleDeleteChat(chat.id)}
+                      okText="Sí"
+                      cancelText="No"
+                    >
+                      {!collapsed && (
+                        <DeleteOutlined style={{ color: "#ff4d4f" }} />
+                      )}
+                    </Popconfirm>,
+                  ]}
+                >
+                  <List.Item.Meta
+                    avatar={
+                      <Avatar
+                        icon={<MessageOutlined />}
+                        style={{
+                          backgroundColor: isActive ? "#1890ff" : "#ccc",
+                        }}
+                      />
+                    }
+                    title={
+                      <span style={{ color: "#fff" }}>
+                        {!collapsed && (chat.title || "Entrevista sin título")}
+                      </span>
+                    }
+                    description={
+                      !collapsed && (
+                        <span style={{ color: "#aaa", fontSize: "12px" }}>
+                          {(chat.lastMessage || "").slice(0, 40)}...
+                        </span>
+                      )
+                    }
+                  />
+                </List.Item>
+              </Tooltip>
+            );
+          }}
         />
       </div>
 
-      {/* Configuración (solo para Directores) */}
+      {/* Configuración */}
       {userData?.rol === "Director" && (
-        <div
-          style={{
-            padding: "10px",
-            textAlign: "center",
-            background: "#001529",
-            borderTop: "1px solid #002140",
-          }}
-        >
-          <Button
-            type="link"
-            icon={<SettingOutlined />}
-            style={{ color: "#fff" }}
-            onClick={() => navigate("/configuracion")}
+        <div style={{ padding: "10px", borderTop: "1px solid #002140" }}>
+          <Tooltip
+            title="Configuración"
+            placement="right"
+            disabled={!collapsed}
           >
-            {collapsed ? "" : "Configuración"}
-          </Button>
+            <Button
+              type="link"
+              icon={<SettingOutlined />}
+              style={{ color: "#fff" }}
+              block
+              onClick={() => navigate("/configuracion")}
+            >
+              {collapsed ? "" : "Configuración"}
+            </Button>
+          </Tooltip>
         </div>
       )}
 
-      {/* Salir */}
-      <div
-        style={{
-          padding: "10px",
-          textAlign: "center",
-          background: "#001529",
-          borderTop: "1px solid #002140",
-        }}
-      >
-        <Button
-          type="link"
-          icon={<LogoutOutlined />}
-          style={{ color: "#fff" }}
-          onClick={handleLogout}
-        >
-          {collapsed ? "" : "Salir"}
-        </Button>
+      {/* Logout */}
+      <div style={{ padding: "10px", borderTop: "1px solid #002140" }}>
+        <Tooltip title="Salir" placement="right" disabled={!collapsed}>
+          <Button
+            type="link"
+            icon={<LogoutOutlined />}
+            style={{ color: "#fff" }}
+            block
+            onClick={handleLogout}
+          >
+            {collapsed ? "" : "Salir"}
+          </Button>
+        </Tooltip>
       </div>
     </div>
   );

@@ -1,29 +1,36 @@
-from flask import Flask  # type: ignore
-from flask_cors import CORS  # type: ignore
+from flask import Flask
+from flask_cors import CORS
 from config import Config
 from chatbot.extensions import mysql
 from chatbot.routes.auth import auth_bp
 from chatbot.routes.chat import chat_bp
 from chatbot.routes.roles import roles_bp
 
+
 def create_app():
     app = Flask(__name__)
-    
-    # Cargar configuración desde config.py
+
+    # Load settings
     app.config.from_object(Config)
 
-    # CORS: permitir React (puerto 3000) con métodos y headers
-    CORS(app, origins=["http://localhost:3000"], supports_credentials=True)
+    CORS(
+        app,
+        resources={r"/*": {"origins": "http://localhost:3000"}},
+        supports_credentials=True,
+        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["Content-Type", "Authorization"],
+    )
 
-    # Inicializar MySQL
+    # Initialize MySQL
     mysql.init_app(app)
 
-    # Registrar Blueprints
+    # Register blueprints
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(chat_bp, url_prefix="/api")
     app.register_blueprint(roles_bp, url_prefix="/roles")
 
     return app
+
 
 if __name__ == "__main__":
     app = create_app()

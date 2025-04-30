@@ -1,128 +1,103 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Input, Button, List, Typography, Layout, Card, Select } from "antd";
+import {
+  Input,
+  Button,
+  List,
+  Layout,
+  Card,
+  message as antdMessage,
+  Spin,
+} from "antd";
 import axios from "axios";
-import jsPDF from "jspdf";
+import { useParams, useNavigate } from "react-router-dom";
+import { exportChatLog } from "../utils/pdf";
 
 const { Content, Footer } = Layout;
 
-function Chat() {
+export default function Chat() {
+  const { chatId } = useParams();
+  const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [role, setRole] = useState("");
-  const [roles, setRoles] = useState([]);
-  const [isRoleSubmitted, setIsRoleSubmitted] = useState(false);
+  const [roleContext, setRoleContext] = useState("");
   const [log, setLog] = useState("");
+  const [sending, setSending] = useState(false);
+  const [typing, setTyping] = useState(false);
   const chatEndRef = useRef(null);
 
-  useEffect(() => {
-    const fetchRoles = async () => {
-      try {
-        const res = await axios.get("http://127.0.0.1:5000/roles/list-roles");
-        setRoles(res.data); // Actualiza el estado con los roles obtenidos
-      } catch (err) {
-        console.error("Error al cargar los roles:", err);
-      }
-    };
+  const userData = JSON.parse(localStorage.getItem("userData"));
+  if (!userData) navigate("/login");
 
-    fetchRoles();
-  }, []);
+  const user_id = userData?.id;
+
+  useEffect(() => {
+    async function loadChat() {
+      try {
+        const res = await axios.get(`/api/chats/${chatId}`, {
+          params: { user_id },
+        });
+        const { role_context, messages: history } = res.data;
+        setRoleContext(role_context);
+        setMessages(
+          history.map((m) => ({ text: m.content, sender: m.sender }))
+        );
+        setLog(
+          history
+            .map((m) => `${m.sender === "user" ? "User" : "Bot"}: ${m.content}`)
+            .join("\n") + "\n"
+        );
+      } catch (err) {
+        console.error("Error loading chat:", err);
+        navigate("/chat");
+      }
+    }
+    loadChat();
+  }, [chatId, navigate, user_id]);
 
   const handleSend = async () => {
-    if (input.trim()) {
-      const userMessage = { text: input, sender: "user" };
-      setMessages([...messages, userMessage]);
-      setLog((prevLog) => prevLog + `User: ${input}\n`);
-      setInput("");
+    if (!input.trim()) return;
 
-      try {
-        const response = await axios.post("http://127.0.0.1:5000/api/chat", {
-          message: input,
-          role: role,
-        });
+    setSending(true);
+    const userTxt = input.trim();
+    setMessages((prev) => [...prev, { text: userTxt, sender: "user" }]);
+    setLog((prev) => prev + `User: ${userTxt}\n`);
+    setInput("");
 
-        const botMessage = { text: response.data.response, sender: "bot" };
-        setMessages((prevMessages) => [...prevMessages, botMessage]);
-        setLog((prevLog) => prevLog + `Bot: ${response.data.response}\n`);
-      } catch (error) {
-        console.error("Error al conectar con el backend:", error);
-        const errorMessage = {
-          text: "Error al conectar con el servidor.",
-          sender: "bot",
-        };
-        setMessages((prevMessages) => [...prevMessages, errorMessage]);
-        setLog(
-          (prevLog) => prevLog + `Bot: Error al conectar con el servidor.\n`
-        );
-      }
+    try {
+      setTyping(true);
+
+      const res = await axios.post(`/api/chats/${chatId}/messages`, {
+        user_id: user_id,
+        message: userTxt,
+        role_context: roleContext,
+      });
+
+      const botTxt = res.data.response;
+
+      const delay = 500 + Math.random() * 800; // 500ms to 1300ms
+      setTimeout(() => {
+        setMessages((prev) => [...prev, { text: botTxt, sender: "bot" }]);
+        setLog((prev) => prev + `Bot: ${botTxt}\n`);
+        setTyping(false);
+      }, delay);
+    } catch (err) {
+      console.error("Error sending message:", err);
+      antdMessage.error("Fallo la comunicación con el servidor");
+      setMessages((prev) => [
+        ...prev,
+        { text: "Error del servidor.", sender: "bot" },
+      ]);
+      setLog((prev) => prev + `Bot: Error del servidor.\n`);
+      setTyping(false);
+    } finally {
+      window.dispatchEvent(new Event("refreshChats"));
+      setSending(false);
     }
   };
 
-  // Scroll to the bottom of the chat whenever a new message is added
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  // PDF creation
-  const handleDownloadLog = () => {
-    const pdf = new jsPDF();
-    const margin = 10;
-    const pageWidth = pdf.internal.pageSize.width;
-    const pageHeight = pdf.internal.pageSize.height;
-    const maxWidth = pageWidth * 0.6;
-    const lineHeight = 8;
-    let y = margin;
-
-    pdf.setFont("Helvetica");
-
-    y += lineHeight + 0.5;
-    pdf.setFontSize(20);
-    pdf.text("Chat Log", margin, y);
-    y += lineHeight + 4;
-
-    pdf.setFontSize(11);
-    const entries = log.split("\n").filter((line) => line.trim() !== "");
-
-    entries.forEach((entry) => {
-      const isUser = entry.startsWith("User:");
-      const sender = isUser ? "Usuario" : "Entrevistado";
-      const message = entry.replace(/^User: |^Bot: /, "");
-
-      const lines = pdf.splitTextToSize(message, maxWidth);
-      const boxHeight = lines.length * lineHeight + 4;
-      const boxWidth =
-        Math.max(...lines.map((line) => pdf.getTextWidth(line))) + 6;
-
-      const senderHeight = 5;
-      const totalHeight = senderHeight + boxHeight;
-
-      if (y + totalHeight + margin > pageHeight) {
-        pdf.addPage();
-        y = margin;
-      }
-
-      const x = isUser ? pageWidth - boxWidth - margin : margin;
-      const fillColor = isUser ? [200, 230, 255] : [230, 230, 230];
-
-      pdf.setFontSize(9);
-      pdf.setTextColor(100);
-      pdf.text(sender, x, y);
-
-      pdf.setFillColor(...fillColor);
-      pdf.roundedRect(x, y + 2, boxWidth, boxHeight, 3, 3, "F");
-
-      pdf.setTextColor(0);
-      pdf.setFontSize(11);
-      let textY = y + lineHeight + 2;
-      lines.forEach((line) => {
-        pdf.text(line, x + 3, textY);
-        textY += lineHeight;
-      });
-
-      y += totalHeight + 4;
-    });
-
-    pdf.save("chat_log.pdf");
-  };
+  }, [messages, typing]);
 
   return (
     <Layout style={{ height: "100%" }}>
@@ -134,100 +109,75 @@ function Chat() {
           gap: "10px",
         }}
       >
-        {!isRoleSubmitted && (
-          <Card
-            style={{
-              margin: "100px 370px",
-              padding: "15px",
-              display: "flex",
-              alignContent: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Typography.Title
-              level={3}
-              style={{
-                marginBottom: "15px",
-                marginTop: "-5px",
-                textAlign: "center",
-              }}
-            >
-              Configuración Inicial
-            </Typography.Title>
-            <Select
-              placeholder="Selecciona un rol"
-              style={{ width: "100%", marginBottom: "10px" }}
-              onChange={(value) => setRole(value)}
-            >
-              {roles.map((rol) => (
-                <Select.Option key={rol.id} value={rol.nombre_rol}>
-                  {rol.nombre_rol}
-                </Select.Option>
-              ))}
-            </Select>
-            <Input
-              placeholder="Escribe tu primer mensaje..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              style={{ marginBottom: "10px" }}
-            />
-            <Button type="primary" onClick={() => setIsRoleSubmitted(true)} block>
-              Iniciar Chat
-            </Button>
-          </Card>
-        )}
-        {isRoleSubmitted && (
-          <Card style={{ flex: 1, overflowY: "auto", padding: "15px" }}>
-            <List
-              dataSource={messages}
-              renderItem={(item) => (
-                <List.Item
+        <Card
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            padding: "15px",
+            background: "#fefefe",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+          }}
+        >
+          <List
+            dataSource={messages}
+            renderItem={(item) => (
+              <List.Item
+                style={{
+                  justifyContent:
+                    item.sender === "user" ? "flex-end" : "flex-start",
+                }}
+              >
+                <div
                   style={{
-                    justifyContent:
-                      item.sender === "user" ? "flex-end" : "flex-start",
+                    maxWidth: "70%",
+                    padding: "10px 14px",
+                    borderRadius: "12px",
+                    backgroundColor:
+                      item.sender === "user" ? "#1677ff" : "#e6f4ff",
+                    color: item.sender === "user" ? "#fff" : "#000",
+                    fontSize: "14px",
+                    animation: "fadeIn 0.3s ease-in-out",
                   }}
                 >
-                  <div
-                    style={{
-                      maxWidth: "70%",
-                      padding: "10px",
-                      borderRadius: "10px",
-                      backgroundColor:
-                        item.sender === "user" ? "#1890ff" : "#f0f0f0",
-                      color: item.sender === "user" ? "#fff" : "#000",
-                    }}
-                  >
-                    {item.text}
-                  </div>
-                </List.Item>
-              )}
-            />
-            <div ref={chatEndRef} />
-          </Card>
-        )}
-        {isRoleSubmitted && (
-          <div style={{ display: "flex", gap: "10px" }}>
-            <Input
-              placeholder="Escribe tu mensaje..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onPressEnter={handleSend}
-              style={{ flex: 1 }}
-            />
-            <Button type="primary" onClick={handleSend}>
-              Enviar
-            </Button>
-            <Button onClick={handleDownloadLog}>Descargar Chat</Button>
-          </div>
-        )}
+                  {item.text}
+                </div>
+              </List.Item>
+            )}
+          />
+          {typing && (
+            <div style={{ paddingLeft: "10px" }}>
+              <Spin size="small" tip="Escribiendo..." />
+            </div>
+          )}
+          <div ref={chatEndRef} />
+        </Card>
+
+        <div style={{ display: "flex", gap: "10px" }}>
+          <Input
+            placeholder="Escribe tu mensaje..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onPressEnter={handleSend}
+            style={{ flex: 1 }}
+          />
+          <Button type="primary" onClick={handleSend} loading={sending}>
+            Enviar
+          </Button>
+          <Button onClick={() => exportChatLog(log)}>Descargar Chat</Button>
+        </div>
       </Content>
-      <Footer
-        style={{ fontSize: "12px", textAlign: "center", margin: "-15px" }}
-      >
+      <Footer style={{ fontSize: "12px", textAlign: "center" }}>
         AI Chatbot Application ©2025
       </Footer>
+
+      <style>
+        {`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}
+      </style>
     </Layout>
   );
 }
-
-export default Chat;

@@ -1,7 +1,6 @@
 from flask import Blueprint, request, jsonify  # type: ignore
 from flask_cors import cross_origin  # type: ignore
-from werkzeug.security import generate_password_hash  # type: ignore
-from werkzeug.security import check_password_hash  # type: ignore
+from werkzeug.security import generate_password_hash, check_password_hash  # type: ignore
 from chatbot.db import mysql
 import traceback
 
@@ -75,7 +74,9 @@ def login():
                     "nombre": row["nombre"],
                     "rol": row["rol"],
                 }
-                print("Datos del usuario obtenidos de la base de datos:", usuario)  # Depuración
+                print(
+                    "Datos del usuario obtenidos de la base de datos:", usuario
+                )  # Depuración
                 return jsonify(
                     {
                         "mensaje": f"Bienvenido {usuario['nombre']}",
