@@ -5,6 +5,15 @@ from chatbot.extensions import mysql
 from chatbot.routes.auth import auth_bp
 from chatbot.routes.chat import chat_bp
 from chatbot.routes.roles import roles_bp
+from dotenv import load_dotenv
+
+load_dotenv()
+import os
+
+print("🔍 MYSQL_HOST:", os.environ.get("MYSQL_HOST"))
+print("🔍 MYSQL_USER:", os.environ.get("MYSQL_USER"))
+print("🔍 MYSQL_PASSWORD:", os.environ.get("MYSQL_PASSWORD"))
+
 
 
 def create_app():
@@ -20,6 +29,12 @@ def create_app():
         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allow_headers=["Content-Type", "Authorization"],
     )
+
+    print("🔍 MySQL config in app:")
+    print("HOST:", app.config['MYSQL_HOST'])
+    print("USER:", app.config['MYSQL_USER'])
+    print("PASS:", app.config['MYSQL_PASSWORD'])
+    print("DB:", app.config['MYSQL_DB'])
 
     # Initialize MySQL
     mysql.init_app(app)

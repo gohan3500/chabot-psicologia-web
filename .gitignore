@@ -11,4 +11,5 @@ Thumbs.db
 
 # Archivos de entorno
 .env
+.env.example
 .venv
