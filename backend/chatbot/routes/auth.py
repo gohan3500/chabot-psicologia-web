@@ -2,17 +2,18 @@ from flask import Blueprint, request, jsonify  # type: ignore
 from flask_cors import cross_origin  # type: ignore
 from werkzeug.security import generate_password_hash, check_password_hash  # type: ignore
 from chatbot.db import mysql
+import os
 import traceback
 
 auth_bp = Blueprint("auth", __name__)
 
 
 @auth_bp.route("/register", methods=["POST", "OPTIONS"])
-@cross_origin(
-    origin="http://localhost:3000",
-    methods=["POST", "OPTIONS"],
-    allow_headers=["Content-Type"],
-)
+# @cross_origin(
+#     origin= os.environ.get('URL_FRONTEND') or "http://localhost:3000",
+#     methods=["POST", "OPTIONS"],
+#     allow_headers=["Content-Type"],
+# )
 def register():
     if request.method == "OPTIONS":
         return jsonify({"ok": True}), 200
@@ -46,11 +47,11 @@ def register():
 
 
 @auth_bp.route("/login", methods=["POST", "OPTIONS"])
-@cross_origin(origin="http://localhost:3000", headers=["Content-Type"])
+#@cross_origin(origin= os.environ.get('URL_FRONTEND') or "http://localhost:3000", headers=["Content-Type"])
 def login():
     if request.method == "OPTIONS":
         return jsonify({"ok": True}), 200
-
+    print("Login endpoint reached")  # Depuración
     data = request.get_json()
     correo = data.get("correo")
     contrasena = data.get("contrasena")
@@ -97,7 +98,7 @@ def login():
 
 
 @auth_bp.route("/reset-password", methods=["POST", "OPTIONS"])
-@cross_origin(origin="http://localhost:3000", headers=["Content-Type"])
+#@cross_origin(origin= os.environ.get('URL_FRONTEND') or "http://localhost:3000", headers=["Content-Type"])
 def reset_password():
     data = request.get_json()
     correo = data.get("correo")
